@@ -14,7 +14,7 @@ enum
 	WaterSensorPinAmberLED		= GPIO_MAKE_PIN(HW_GPIOA, 6),
 	WaterSensorPinSuperRedLED	= GPIO_MAKE_PIN(HW_GPIOA, 7),
 	WaterSensorPinWhiteLED		= GPIO_MAKE_PIN(HW_GPIOB, 5),
-	WaterSensorPinPhotodetector	= GPIO_MAKE_PIN(HW_GPIOB, 10),
+	WaterSensorPinPhotodetector	= GPIO_MAKE_PIN(HW_GPIOB, 1),
 };
 
 //might not be needed
@@ -24,7 +24,7 @@ initWaterSensor()
 	PORT_HAL_SetMuxMode(PORTA_BASE, 6u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 5u, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTB_BASE, 10u, kPortMuxAsGpio);
+	//PORT_HAL_SetMuxMode(PORTB_BASE, 10u, kPortMuxAsGpio);
 	return;
 }
 
@@ -33,8 +33,8 @@ void ReadPhotodetector(){
 	//GPIOB_PDIR & (1<<10)
 	//SEGGER_RTT_printf(0, "\r\n\tPhotodetector reading=%d V",
 	//				GPIOB_PDIR & (1<<10));
-	SEGGER_RTT_printf(0, "\r\n\tDetectorReading=%d",
-					GPIO_DRV_ReadPinInput(WaterSensorPinPhotodetector));
+	//SEGGER_RTT_printf(0, "\r\n\tDetectorReading=%d", ADC16_DRV_GETCONVRAW()
+					// GPIO_DRV_ReadPinInput(WaterSensorPinPhotodetector));
 	
 	return;
 }

@@ -56,7 +56,7 @@
 #include "warp.h"
 
 #define WARP_FRDMKL03
-
+#define ADC_0                   (0U)
 /*
 *	Comment out the header file to disable devices
 */
@@ -82,8 +82,9 @@
 #else
 #	include "devMMA8451Q.h"
 #	include "devSSD1331.h"
-#	include "devINA219.h"
+#	include "devTSL2591.h"
 #	include "WaterSensor.h"
+#	include "adc_low_power.h"
 #endif
 
 #define WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
@@ -118,6 +119,11 @@ volatile WarpI2CDeviceState			deviceMMA8451QState;
 // added for coursework 4
 #ifdef WARP_BUILD_ENABLE_DEVINA219
 volatile WarpI2CDeviceState			deviceINA219State;
+#endif
+
+// added for coursework 5
+#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+volatile WarpI2CDeviceState			deviceTSL2591State;
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVLPS25H
@@ -201,6 +207,7 @@ volatile uint32_t			gWarpMenuPrintDelayMilliseconds	= 10;
 volatile uint32_t			gWarpSupplySettlingDelayMilliseconds = 1;
 
 void					sleepUntilReset(void);
+void 					TSL2591Read();		//added for coursework 5
 void					lowPowerPinStates(void);
 void					disableTPS82740A(void);
 void					disableTPS82740B(void);
@@ -1253,6 +1260,11 @@ main(void)
 	initINA219(	0x40	/* i2cAddress */,	&deviceINA219State	);
 #endif
 
+//added for coursework 5
+#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+	initTSL2591(	0x29	/* i2cAddress */,	&deviceTSL2591State	);
+#endif
+
 #ifdef WARP_BUILD_ENABLE_DEVLPS25H
 	initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState	);
 #endif
@@ -1359,7 +1371,7 @@ main(void)
 
 	 */
 	devSSD1331init();
-	initWaterSensor();
+//	initWaterSensor();
 
 
 
@@ -1467,7 +1479,7 @@ main(void)
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		//added for coursework 4
-		SEGGER_RTT_WriteString(0, "\r- 'q': give current reading.\n");
+		SEGGER_RTT_WriteString(0, "\r- '5': enable tsl2591.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
@@ -1476,41 +1488,25 @@ main(void)
 
 		switch (key)
 		{
-			/*
-			 *	added for coursework4
-			 *	print the current
-			 
-			case 'q':
+			case '5':
 			{
-				menuTargetSensor = kWarpSensordevINA219;
-				menuI2cDevice = &deviceINA219State;
-	TO CHANGE		I2C_DRV_MasterInit(0  /I2C instance/ , (i2c_master_state_t *)&i2cMasterState);
-				setCalibration_16V_400mA();
-
-
-				SEGGER_RTT_printf(0, "\r\n\tCurrent=%d mA",
-					getCurrent_mA());
-				SEGGER_RTT_printf(0, "\r\n\tCONFIGREG=%d mA",
-					readSensorRegisterINA219(0xa0, 1));
-
+				TSL2591Enable();
+				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED");
+				TSL2591Read();
+				SEGGER_RTT_WriteString(0, "TSL2591 READ");
+				TSL2591Disable();
+				SEGGER_RTT_WriteString(0, "TSL2591 DISABLED");
 				break;
-			
 			}
 
-			*/
-
-			/*
-			 *		Select sensor
-			 */
-			case '1':
-
+			case '6':
 			{
-				ReadPhotodetector();
-				
+				TSL2591Enable();
+				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED");
 				break;
-
 			}
 			
+								
 			case '2':
 			{
 				TurnOnAmberLED();
@@ -1567,6 +1563,13 @@ main(void)
 				SEGGER_RTT_WriteString(0, "\r\t- 'q' INA219			(0x00--0x31): 1.95V -- 3.6V\n");
 				#else
 				SEGGER_RTT_WriteString(0, "\r\t- 'q' INA219			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
+#endif
+				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+//added for coursework 5
+#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+				SEGGER_RTT_WriteString(0, "\r\t- 'z' TSL2591			(0x00--0x31): 1.95V -- 3.6V\n");
+				#else
+				SEGGER_RTT_WriteString(0, "\r\t- 'z' TSL2591			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
 #endif
 				OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
@@ -1714,6 +1717,16 @@ main(void)
 					{
 						menuTargetSensor = kWarpSensordevINA219;
 						menuI2cDevice = &deviceINA219State;
+						break;
+					}
+#endif
+
+//added for coursework 5
+#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+					case 'z':
+					{
+						menuTargetSensor = kWarpSensordevTSL2591;
+						menuI2cDevice = &deviceTSL2591State;
 						break;
 					}
 #endif
@@ -2826,7 +2839,7 @@ loopForSensor(	const char *  tagString,
 	{
 		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
 		{
-			status = readSensorRegisterFunction(address+j, 2 /* numberOfBytes */);
+			status = readSensorRegisterFunction(address+j, 1 /* numberOfBytes */);
 			if (status == kWarpStatusOK)
 			{
 				nSuccesses++;
@@ -2864,10 +2877,10 @@ loopForSensor(	const char *  tagString,
 					if (chatty)
 					{
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-						SEGGER_RTT_printf(0, "\r\t0x%02x --> 0x%02x%02x\n",
+						SEGGER_RTT_printf(0, "\r\t0x%02x --> 0x%02x\n",
 							address+j,
-							i2cDeviceState->i2cBuffer[0],
-							i2cDeviceState->i2cBuffer[1]);
+							i2cDeviceState->i2cBuffer[0]);
+							//i2cDeviceState->i2cBuffer[1]);
 #endif
 					}
 				}
@@ -3004,7 +3017,7 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			/*
 			 *	INA219Q: VDD 1.95--3.6
 			 */
-#ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
+#ifdef WARP_BUILD_ENABLE_DEVINA219
 			loopForSensor(	"\r\nINA219:\n\r",		/*	tagString			*/
 					&readSensorRegisterINA219,	/*	readSensorRegisterFunction	*/
 					&deviceINA219State,		/*	i2cDeviceState			*/
@@ -3023,6 +3036,36 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 					);
 			#else
 			SEGGER_RTT_WriteString(0, "\r\n\tINA219 Read Aborted. Device Disabled :(");
+#endif
+			break;
+		}
+
+//added for coursework 5
+		case kWarpSensordevTSL2591:
+		{
+			/*
+			 *	TSL2591Q: VDD 1.95--3.6
+			 */
+#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+			loopForSensor(	"\r\nTSL2591:\n\r",		/*	tagString			*/
+					&readSensorRegisterTSL2591,	/*	readSensorRegisterFunction	*/
+					&deviceTSL2591State,		/*	i2cDeviceState			*/
+					NULL,				/*	spiDeviceState			*/
+					baseAddress,			/*	baseAddress			*/
+					0xA0,				/*	minAddress			*/
+					0xB7,				/*	maxAddress			*/
+					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+					spinDelay,			/*	spinDelay			*/
+
+					autoIncrement,			/*	autoIncrement			*/
+					sssupplyMillivolts,		/*	sssupplyMillivolts		*/
+					referenceByte,			/*	referenceByte			*/
+					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+					chatty				/*	chatty				*/
+					);
+			#else
+			SEGGER_RTT_WriteString(0, "\r\n\tTSL2591 Read Aborted. Device Disabled :(");
 #endif
 			break;
 		}
@@ -3769,4 +3812,145 @@ activateAllLowPowerSensorModes(bool verbose)
 	GPIO_DRV_ClearPinOutput(kWarpPinPAN1326_nSHUTD);
 #endif
 #endif
+}
+
+void TSL2591Read(){
+				bool		autoIncrement, chatty;
+				int		spinDelay, repetitionsPerAddress, chunkReadsPerAddress;
+				int		adaptiveSssupplyMaxMillivolts;
+				uint8_t		referenceByte;
+				
+				//hardcoded values to read...
+				autoIncrement = '1' - '0';
+				chunkReadsPerAddress = '1' - '0';
+				chatty = '1' - '0';
+				spinDelay = 0000;
+				repetitionsPerAddress = 0000;
+				adaptiveSssupplyMaxMillivolts = 2000;
+				referenceByte = 00;
+
+//			#ifdef WARP_BUILD_ENABLE_DEVTSL2591
+//			loopForSensor(	"\r\nTSL2591:\n\r",		/*	tagString			*/
+//					&readSensorRegisterTSL2591,	/*	readSensorRegisterFunction	*/
+//					&deviceTSL2591State,		/*	i2cDeviceState			*/
+//					NULL,				/*	spiDeviceState			*/
+//					0xA0,				/*	baseAddress			*/
+//					0xA0,				/*	minAddress			*/
+//					0xB7,				/*	maxAddress			*/
+//					repetitionsPerAddress,		/*	repetitionsPerAddress		*/
+//					chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
+//					spinDelay,			/*	spinDelay			*/
+//
+//					autoIncrement,			/*	autoIncrement			*/
+//					1800,				/*	sssupplyMillivolts		*/
+//					referenceByte,			/*	referenceByte			*/
+//					adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
+//					chatty				/*	chatty				*/
+//					);
+//			#else
+//			SEGGER_RTT_WriteString(0, "\r\n\tTSL2591 Read Aborted. Device Disabled :(");
+//			#endif
+//			disableI2Cpins();
+
+	WarpStatus		status;
+	uint8_t			address = min(0xA0, 0xA0);
+	int			readCount = repetitionsPerAddress + 1;
+	int			nSuccesses = 0;
+	int			nFailures = 0;
+	int			nCorrects = 0;
+	int			nBadCommands = 0;
+	uint16_t		actualSssupplyMillivolts = 1800;
+
+	enableSssupply(actualSssupplyMillivolts);
+	SEGGER_RTT_WriteString(0, "TSL2591:");
+
+	/*
+	 *	Keep on repeating until we are above the maxAddress, or just once if not autoIncrement-ing
+	 *	This is checked for at the tail end of the loop.
+	 */
+	enableI2Cpins(32768);
+
+	while (true)
+	{
+		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
+		{
+			status = readSensorRegisterTSL2591(address+j, 2 /* numberOfBytes */);
+			if (status == kWarpStatusOK)
+			{
+				nSuccesses++;
+				if (actualSssupplyMillivolts > 1800)
+				{
+					actualSssupplyMillivolts -= 100;
+					enableSssupply(actualSssupplyMillivolts);
+				}
+
+					if (referenceByte == deviceTSL2591State.i2cBuffer[0])
+					{
+						nCorrects++;
+					}
+
+					if (chatty)
+					{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+						SEGGER_RTT_printf(0, "\r\t0x%02x --> 0x%02x%02x\n",
+							address+j,
+							deviceTSL2591State.i2cBuffer[0],
+							deviceTSL2591State.i2cBuffer[1]);
+#endif
+					}
+
+			}
+			else if (status == kWarpStatusDeviceCommunicationFailed)
+			{
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+				SEGGER_RTT_printf(0, "\r\t0x%02x --> ----\n",
+					address+j);
+#endif
+
+				nFailures++;
+				if (actualSssupplyMillivolts < adaptiveSssupplyMaxMillivolts)
+				{
+					actualSssupplyMillivolts += 100;
+					enableSssupply(actualSssupplyMillivolts);
+				}
+			}
+			else if (status == kWarpStatusBadDeviceCommand)
+			{
+				nBadCommands++;
+			}
+
+			if (spinDelay > 0)
+			{
+				OSA_TimeDelay(spinDelay);
+			}
+		}
+
+		if (autoIncrement)
+		{
+			address++;
+		}
+
+		if (address > 0xB7 || !autoIncrement)
+		{
+			/*
+			 *	We either iterated over all possible addresses, or were asked to do only 
+			 *	one address anyway (i.e. don't increment), so we're done.
+			 */
+			break;
+		}
+	}
+
+	/*
+	 *	We intersperse RTT_printfs with forced delays to allow us to use small
+	 *	print buffers even in RUN mode.
+	 */
+#ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+	SEGGER_RTT_printf(0, "\r\n\t%d/%d success rate.\n", nSuccesses, (nSuccesses + nFailures));
+	OSA_TimeDelay(50);
+	SEGGER_RTT_printf(0, "\r\t%d/%d successes matched ref. value of 0x%02x.\n", nCorrects, nSuccesses, referenceByte);
+	OSA_TimeDelay(50);
+	SEGGER_RTT_printf(0, "\r\t%d bad commands.\n\n", nBadCommands);
+	OSA_TimeDelay(50);
+#endif
+disableI2Cpins();
 }
