@@ -42,6 +42,6 @@ typedef enum
 } SSD1331Commands;
 
 int	devSSD1331init(void);
-
-
-
+int     devSSD1331Clear(void);
+int	devSSD1331Red(void);
+int	devSSD1331Green(void);

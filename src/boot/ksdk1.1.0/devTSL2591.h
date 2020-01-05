@@ -35,3 +35,15 @@ readSensorRegisterTSL2591(uint8_t deviceRegister, int numberOfBytes);
 void TSL2591Enable();
 
 void TSL2591Disable();
+
+void TurnOnAmberLED();
+
+void TurnOffAmberLED();
+
+void TurnOnSuperRedLED();
+
+void TurnOffSuperRedLED();
+
+void TurnOnWhiteLED();
+
+void TurnOffWhiteLED();

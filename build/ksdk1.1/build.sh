@@ -16,9 +16,8 @@
 	cp ../../src/boot/ksdk1.1.0/devADXL362.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devMMA8451Q.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devSSD1331.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/devINA219.*				work/demos/Warp/src/
+#	cp ../../src/boot/ksdk1.1.0/devINA219.*				work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devTSL2591.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/WaterSensor.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devLPS25H.*				work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devHDC1000.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devMAG3110.*			work/demos/Warp/src/
@@ -27,9 +26,6 @@
 	cp ../../src/boot/ksdk1.1.0/devBME680.*				work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devTCS34725.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devSI4705.*				work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/adc_low_power.*			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/fsl_adc_irq.c			work/demos/Warp/src/
-	cp ../../src/boot/ksdk1.1.0/lptmr_trigger.c			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devCCS811.*				work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devAMG8834.*			work/demos/Warp/src/
 	cp ../../src/boot/ksdk1.1.0/devAS7262.*				work/demos/Warp/src/

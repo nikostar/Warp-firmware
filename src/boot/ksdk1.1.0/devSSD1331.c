@@ -150,6 +150,21 @@ devSSD1331init(void)
 	writeCommand(0x5F);
 	writeCommand(0x3F);
 
+	return 0;
+}
+
+int
+devSSD1331Green(void)
+{
+	/*
+	Clear Screen
+	 */
+	writeCommand(kSSD1331CommandCLEAR);
+	writeCommand(0x00);
+	writeCommand(0x00);
+	writeCommand(0x5F);
+	writeCommand(0x3F);
+
 
 
 	/*
@@ -168,7 +183,53 @@ devSSD1331init(void)
 	writeCommand(255);
 	writeCommand(0);
 
-	
+	return 0;
+}
+
+int
+devSSD1331Red(void)
+{
+	/*
+	Clear Screen
+	 */
+	writeCommand(kSSD1331CommandCLEAR);
+	writeCommand(0x00);
+	writeCommand(0x00);
+	writeCommand(0x5F);
+	writeCommand(0x3F);
+
+
+
+	/*
+	 *	Any post-initialization drawing commands go here.
+	 */
+	 
+	writeCommand(kSSD1331CommandDRAWRECT);
+	writeCommand(0x00);
+	writeCommand(0x00);
+	writeCommand(0x5F);
+	writeCommand(0x3F);
+	writeCommand(255);
+	writeCommand(0);
+	writeCommand(0);
+	writeCommand(255);
+	writeCommand(0);
+	writeCommand(0);
+
+	return 0;
+}
+
+int
+devSSD1331Clear(void)
+{
+	/*
+	Clear Screen
+	 */
+	writeCommand(kSSD1331CommandCLEAR);
+	writeCommand(0x00);
+	writeCommand(0x00);
+	writeCommand(0x5F);
+	writeCommand(0x3F);
 
 	return 0;
 }
