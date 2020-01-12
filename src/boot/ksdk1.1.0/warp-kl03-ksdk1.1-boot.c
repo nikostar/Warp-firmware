@@ -204,9 +204,9 @@ volatile uint32_t			gWarpMenuPrintDelayMilliseconds	= 10;
 volatile uint32_t			gWarpSupplySettlingDelayMilliseconds = 1;
 
 void					sleepUntilReset(void);
-uint16_t 				TSL2591Read(uint8_t address);		//added for coursework 5
 void					lowPowerPinStates(void);
 void					disableTPS82740A(void);
+uint16_t 				TSL2591Read(uint8_t address);	//added for coursework 5
 void					disableTPS82740B(void);
 void					enableTPS82740A(uint16_t voltageMillivolts);
 void					enableTPS82740B(uint16_t voltageMillivolts);
@@ -1368,7 +1368,12 @@ main(void)
 
 	 */
 	devSSD1331init();
-
+	uint16_t Read11=0x0000;
+	uint16_t Read12=0x0000;
+	uint16_t Read21=0x0000;
+	uint16_t Read22=0x0000;
+	uint16_t Read31=0x0000;
+	uint16_t Read32=0x0000;
 
 
 	while (1)
@@ -1474,11 +1479,17 @@ main(void)
 		SEGGER_RTT_WriteString(0, "\r- 'z': dump all sensors data.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
-		//added for coursework 4
+		//added for coursework 5
+		SEGGER_RTT_WriteString(0, "\r- '3': Set baseline.\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
 		SEGGER_RTT_WriteString(0, "\r- '4': Clear the screen.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		SEGGER_RTT_WriteString(0, "\r- '5': Take a reading.\n");
+		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
+
+		SEGGER_RTT_WriteString(0, "\r- '6 or 7 or 8': Test statistics.\n");
 		OSA_TimeDelay(gWarpMenuPrintDelayMilliseconds);
 
 		SEGGER_RTT_WriteString(0, "\rEnter selection> ");
@@ -1487,28 +1498,18 @@ main(void)
 
 		switch (key)
 		{
-			//CLear Screen
-			case '4':
+			case '3':
 			{
 				devSSD1331Clear();
-			}
-
-			//Do the sample readings
-			case '5':
-			{
-				int counter=0;
-
 				TSL2591Enable();
 				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED");
-				OSA_TimeDelay(1000);
+				OSA_TimeDelay(100);
 	
 				TurnOnSuperRedLED();
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB4);
-				//if Read value>ground value, add to counter
+				Read11=TSL2591Read(0xB4);
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB6);
-				//if Read value>ground value, add to counter
+				Read12=TSL2591Read(0xB6);
 				OSA_TimeDelay(100);
 				TurnOffSuperRedLED();
 
@@ -1516,11 +1517,9 @@ main(void)
 
 				TurnOnAmberLED();
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB4);
-				//if Read value>ground value, add to counter
+				Read21=TSL2591Read(0xB4);
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB6);
-				//if Read value>ground value, add to counter
+				Read22=TSL2591Read(0xB6);
 				OSA_TimeDelay(100);
 				TurnOffAmberLED();
 
@@ -1530,29 +1529,172 @@ main(void)
 			
 				TurnOnWhiteLED();
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB4);
-				//if Read value>ground value, add to counter
+				Read31=TSL2591Read(0xB4);
 				OSA_TimeDelay(100);
-				TSL2591Read(0xB6);
-				//if Read value>ground value, add to counter
+				Read32=TSL2591Read(0xB6);
 				OSA_TimeDelay(100);
 				TurnOffWhiteLED();
 
 				OSA_TimeDelay(100);
 				TSL2591Disable();
-				SEGGER_RTT_WriteString(0, "TSL2591 DISABLED");
+				SEGGER_RTT_WriteString(0, "Baseline Taken");
+				break;
+			}
+
+			//CLear Screen
+			case '4':
+			{
+				devSSD1331Clear();
+				break;
+			}
+
+			//Do the sample readings
+			case '5':
+			{
+				SEGGER_RTT_printf(0, "\r\n\tBaseline.\n");
+				SEGGER_RTT_printf(0, "\r\n\tFull Spectrum1:%d\n", Read11);
+				SEGGER_RTT_printf(0, "\r\n\tIR1           :%d\n", Read12);
+				SEGGER_RTT_printf(0, "\r\n\tFull Spectrum2:%d\n", Read21);
+				SEGGER_RTT_printf(0, "\r\n\tIR2           :%d\n", Read22);
+				SEGGER_RTT_printf(0, "\r\n\tFull Spectrum3:%d\n", Read31);
+				SEGGER_RTT_printf(0, "\r\n\tIR3           :%d\n", Read32);
+
+				int counter=0;
+
+				TSL2591Enable();
+				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED\n");
+				OSA_TimeDelay(100);
+				TurnOnSuperRedLED();
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB4)<(Read11-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB6)<(Read12-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				TurnOffSuperRedLED();
+
+				OSA_TimeDelay(100);
+
+				TurnOnAmberLED();
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB4)<(Read21-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB6)<(Read22-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				TurnOffAmberLED();
+
+				OSA_TimeDelay(100);
+			
 				
-				if(counter>0){
+			
+				TurnOnWhiteLED();
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB4)<(Read31-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				if(TSL2591Read(0xB6)<(Read32-0x0005)){
+					counter=counter+1;
+				}
+				OSA_TimeDelay(100);
+				TurnOffWhiteLED();
+
+				OSA_TimeDelay(100);
+
+				TSL2591Disable();
+				SEGGER_RTT_WriteString(0, "TSL2591 DISABLED\n");
+				if(counter>1){
 					devSSD1331Red();
+					counter=0;
 				}
 				else{
 					devSSD1331Green();
+					counter=0;
+				}
+
+				break;
+			}
+				
+			case '6':
+			{
+				
+								
+				for(int col=0; col<1000;col++){
+				TurnOnSuperRedLED();
+				OSA_TimeDelay(1000);
+
+				TSL2591Enable();
+				OSA_TimeDelay(1000);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB4);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB6);
+				OSA_TimeDelay(100);
+				TSL2591Disable();
+				OSA_TimeDelay(100);
+				TurnOffSuperRedLED();
+				OSA_TimeDelay(1000);
+				}
+
+				break;
+			}
+			
+			case '7':
+			{
+				
+								
+				for(int col=0; col<1000;col++){
+				TurnOnAmberLED();
+				OSA_TimeDelay(1000);
+
+				TSL2591Enable();
+				OSA_TimeDelay(1000);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB4);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB6);
+				OSA_TimeDelay(100);
+				TSL2591Disable();
+				OSA_TimeDelay(100);
+				TurnOffAmberLED();
+				OSA_TimeDelay(1000);
 				}
 
 				break;
 			}
 
+			case '8':
+			{
+				
+								
+				for(int col=0; col<1000;col++){
+				TurnOnWhiteLED();
+				OSA_TimeDelay(1000);
+
+				TSL2591Enable();
+				OSA_TimeDelay(1000);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB4);
+				OSA_TimeDelay(100);
+				TSL2591Read(0xB6);
+				OSA_TimeDelay(100);
+				TSL2591Disable();
+				OSA_TimeDelay(100);
+				TurnOffWhiteLED();
+				OSA_TimeDelay(1000);
+				}
+
+				break;
+			}
 			
+
 			case 'a':
 			{
 				SEGGER_RTT_WriteString(0, "\r\tSelect:\n");
@@ -3889,7 +4031,7 @@ uint16_t TSL2591Read(uint8_t address){
 					if (chatty)
 					{
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
-						SEGGER_RTT_printf(0, "\r\t0x%02x --> 0x%02x%02x\n",
+						SEGGER_RTT_printf(0, "\r\t0x%02x --> %d%d\n",
 							address,
 							deviceTSL2591State.i2cBuffer[1],
 							deviceTSL2591State.i2cBuffer[0]);
@@ -3944,3 +4086,4 @@ uint16_t TSL2591Read(uint8_t address){
 
 disableI2Cpins();
 }
+

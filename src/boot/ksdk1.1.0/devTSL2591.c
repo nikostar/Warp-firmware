@@ -18,7 +18,7 @@ enum
 {
 	kTSL2591PinSCL		= GPIO_MAKE_PIN(HW_GPIOB, 3),
 	kTSL2591PinSDA		= GPIO_MAKE_PIN(HW_GPIOB, 4),
-	PinAmberLED		= GPIO_MAKE_PIN(HW_GPIOB, 1),
+	PinAmberLED		= GPIO_MAKE_PIN(HW_GPIOB, 6),
 	PinSuperRedLED		= GPIO_MAKE_PIN(HW_GPIOB, 7),
 	PinWhiteLED		= GPIO_MAKE_PIN(HW_GPIOB, 5),
 };
@@ -29,7 +29,7 @@ initTSL2591(const uint8_t i2cAddress, WarpI2CDeviceState volatile *  deviceState
 {
 	PORT_HAL_SetMuxMode(PORTB_BASE, 3u, kPortMuxAlt2);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 4u, kPortMuxAlt2);
-	PORT_HAL_SetMuxMode(PORTB_BASE, 1u, kPortMuxAsGpio);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 6u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 7u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 5u, kPortMuxAsGpio);
 
@@ -206,4 +206,5 @@ void TurnOffWhiteLED(){
 	GPIO_DRV_ClearPinOutput(PinWhiteLED);
 	return;
 }
+
 
