@@ -1498,13 +1498,16 @@ main(void)
 
 		switch (key)
 		{
+			//Setting the Baseline
 			case '3':
 			{
+				//Clean the screen and activate TSL2591
 				devSSD1331Clear();
 				TSL2591Enable();
 				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED");
 				OSA_TimeDelay(100);
-	
+
+				//Set Baseline for Red LED
 				TurnOnSuperRedLED();
 				OSA_TimeDelay(100);
 				Read11=TSL2591Read(0xB4);
@@ -1514,7 +1517,7 @@ main(void)
 				TurnOffSuperRedLED();
 
 				OSA_TimeDelay(100);
-
+				//Set Baseline for Amber LED
 				TurnOnAmberLED();
 				OSA_TimeDelay(100);
 				Read21=TSL2591Read(0xB4);
@@ -1526,7 +1529,7 @@ main(void)
 				OSA_TimeDelay(100);
 			
 				
-			
+				//Set Baseline for White LED
 				TurnOnWhiteLED();
 				OSA_TimeDelay(100);
 				Read31=TSL2591Read(0xB4);
@@ -1541,7 +1544,7 @@ main(void)
 				break;
 			}
 
-			//CLear Screen
+			//Clear Screen
 			case '4':
 			{
 				devSSD1331Clear();
@@ -1551,6 +1554,7 @@ main(void)
 			//Do the sample readings
 			case '5':
 			{
+				//Print Baseline
 				SEGGER_RTT_printf(0, "\r\n\tBaseline.\n");
 				SEGGER_RTT_printf(0, "\r\n\tFull Spectrum1:%d\n", Read11);
 				SEGGER_RTT_printf(0, "\r\n\tIR1           :%d\n", Read12);
@@ -1558,12 +1562,15 @@ main(void)
 				SEGGER_RTT_printf(0, "\r\n\tIR2           :%d\n", Read22);
 				SEGGER_RTT_printf(0, "\r\n\tFull Spectrum3:%d\n", Read31);
 				SEGGER_RTT_printf(0, "\r\n\tIR3           :%d\n", Read32);
-
+		
+				//Implement Counter
 				int counter=0;
 
 				TSL2591Enable();
 				SEGGER_RTT_WriteString(0, "TSL2591 ENABLED\n");
 				OSA_TimeDelay(100);
+
+				//Take Reading for Red LED and increment counter if value is smaller than baseline
 				TurnOnSuperRedLED();
 				OSA_TimeDelay(100);
 				if(TSL2591Read(0xB4)<(Read11-0x0005)){
@@ -1578,6 +1585,7 @@ main(void)
 
 				OSA_TimeDelay(100);
 
+				//Take Reading for Amber LED and increment counter if value is smaller than baseline
 				TurnOnAmberLED();
 				OSA_TimeDelay(100);
 				if(TSL2591Read(0xB4)<(Read21-0x0005)){
@@ -1593,7 +1601,7 @@ main(void)
 				OSA_TimeDelay(100);
 			
 				
-			
+				//Take Reading for White LED and increment counter if value is smaller than baseline
 				TurnOnWhiteLED();
 				OSA_TimeDelay(100);
 				if(TSL2591Read(0xB4)<(Read31-0x0005)){
@@ -1610,6 +1618,8 @@ main(void)
 
 				TSL2591Disable();
 				SEGGER_RTT_WriteString(0, "TSL2591 DISABLED\n");
+
+				//Turn screen Red or Green based on readings
 				if(counter>1){
 					devSSD1331Red();
 					counter=0;
@@ -1622,6 +1632,7 @@ main(void)
 				break;
 			}
 				
+			//For testing purposes only
 			case '6':
 			{
 				
@@ -1646,6 +1657,7 @@ main(void)
 				break;
 			}
 			
+			//For testing purposes only
 			case '7':
 			{
 				
@@ -1670,6 +1682,7 @@ main(void)
 				break;
 			}
 
+			//For testing purposes only
 			case '8':
 			{
 				
@@ -3978,6 +3991,7 @@ activateAllLowPowerSensorModes(bool verbose)
 #endif
 }
 
+//added for coursework 5
 uint16_t TSL2591Read(uint8_t address){
 				bool		autoIncrement, chatty;
 				int		spinDelay, repetitionsPerAddress, chunkReadsPerAddress;
@@ -4005,14 +4019,11 @@ uint16_t TSL2591Read(uint8_t address){
 	enableSssupply(actualSssupplyMillivolts);
 	SEGGER_RTT_WriteString(0, "TSL2591:");
 
-	/*
-	 *	Keep on repeating until we are above the maxAddress, or just once if not autoIncrement-ing
-	 *	This is checked for at the tail end of the loop.
-	 */
 	enableI2Cpins(32768);
 
 	while (true)
 	{
+		//Read 2 bytes from desired register
 		status = readSensorRegisterTSL2591(address, 2 /* numberOfBytes */);
 			if (status == kWarpStatusOK)
 			{
@@ -4031,6 +4042,7 @@ uint16_t TSL2591Read(uint8_t address){
 					if (chatty)
 					{
 #ifdef WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF
+						//Print the values stored in registers
 						SEGGER_RTT_printf(0, "\r\t0x%02x --> %d%d\n",
 							address,
 							deviceTSL2591State.i2cBuffer[1],
